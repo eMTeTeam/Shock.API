@@ -7,7 +7,9 @@ namespace Shock.API.DataModel
 {
     public class Observation
     {
-        public string ReferenceNo { get; set; }
+
+        public Guid Id { get; set; }
+        public int RefNo { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }
