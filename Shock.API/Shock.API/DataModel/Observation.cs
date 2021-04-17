@@ -22,5 +22,9 @@ namespace Shock.API.DataModel
         public string Evidence { get; set; }
         public string ProjectName { get; set; }
         public string ProjectLocation { get; set; }
+
+        public string ActionOwner { get; set; }
+
+        public string CreatedUser { get; set; }
     }
 }
