@@ -27,4 +27,10 @@ namespace Shock.API.DataModel
 
         public string CreatedUser { get; set; }
     }
+
+    public class FilterModel
+    {
+        public DateTime FromDate { get; set; }
+        public DateTime ToDate { get; set; }
+    }
 }

@@ -10,7 +10,7 @@ using Shock.API.DataModel;
 
 namespace Shock.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/v1")]
     public class ObservationController : ControllerBase
     {
         private ObservationDbContext dbContext;
@@ -21,11 +21,18 @@ namespace Shock.API.Controllers
         }
 
         // GET: api/Observation
+        [HttpGet("GetAllObservationsForUser")]
+        public IEnumerable<Observation> Get(string user)
+        {
+            return user.ToLower()=="admin'"?dbContext.Observations: dbContext.Observations.Where(a=>a.CreatedUser.ToLower()==user.ToLower());
+        }
+
         [HttpGet("GetAllObservations")]
-        public IEnumerable<Observation> Get()
+        public IEnumerable<Observation> GetAllObservation()
         {
             return dbContext.Observations;
         }
+
 
         // GET api/<controller>/5
         [HttpGet("{id}")]
@@ -35,9 +42,77 @@ namespace Shock.API.Controllers
         }
 
         // POST api/<controller>
-        [HttpPost]
-        public void Post([FromBody]string value)
+        [HttpPost("AddObservation")]
+        public IActionResult Post([FromBody]Observation observation)
         {
+            observation.Id = Guid.NewGuid();
+            observation.DateCreated = DateTime.UtcNow;
+            observation.DateModified= DateTime.UtcNow;
+            var data = dbContext.Observations.ToList();
+            var count = data.Count() != 0 ? data.Max(a=>a.RefNo) : 0;
+
+            observation.RefNo = count + 1;
+            try
+            {
+                dbContext.Observations.Add(observation);
+                dbContext.SaveChanges();
+                return new OkObjectResult(observation);
+            }
+            catch
+            {
+                return BadRequest("Something went wrong, Details not added");
+            }
+        }
+
+        // PUT: api/Quality/5
+        [HttpPost("UpdateObservation")]
+        public IActionResult Update([FromBody]Observation observation)
+        {
+            try
+            {
+                var res = dbContext.Observations.Where(a => a.Id == observation.Id).FirstOrDefault();
+
+                if (res != null)
+                {
+                    res.ProjectLocation = observation.ProjectLocation;
+                    res.Name = observation.Name;
+                    res.ActionOwner = observation.ActionOwner;
+                    res.AgreedAction = observation.AgreedAction;
+                    res.Category = observation.Category;
+                    res.CreatedUser = observation.CreatedUser;
+                    res.Description = observation.Description;
+                    res.DueDate = observation.DueDate;
+                    res.Evidence = observation.Evidence;
+                    res.ProjectName = observation.ProjectName;
+                    res.Status = observation.Status;
+                    res.TypeOfActivity = observation.TypeOfActivity;
+                    res.DateModified = DateTime.UtcNow;
+                    dbContext.Observations.Update(res);
+                    dbContext.SaveChanges();
+                }
+                return new OkObjectResult(res);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Something went wrong, item not updated" + ex.Message);
+            }
+
+        }
+
+        [HttpPost("FilterObservation")]
+        public IActionResult GetObservationsWithFilter(FilterModel filterModel)
+        {
+            try
+            {
+                var response = dbContext.Observations.Where(a => a.DueDate.Date >= filterModel.FromDate.Date
+                            && a.DueDate.Date <= filterModel.ToDate.Date);
+
+                return new OkObjectResult(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Something went wrong, item not updated" + ex.Message);
+            }
         }
 
         // PUT api/<controller>/5
@@ -46,10 +121,26 @@ namespace Shock.API.Controllers
         {
         }
 
-        // DELETE api/<controller>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete("Delete/{id}")]
+        public IActionResult Delete(string id)
         {
+            try
+            {
+                Guid.TryParse(id, out Guid result);
+
+                var res = dbContext.Observations.Where(a => a.Id == result).FirstOrDefault();
+
+                if (res != null)
+                {
+                    dbContext.Observations.Remove(res);
+                    dbContext.SaveChanges();
+                }
+                return new OkResult();
+            }
+            catch
+            {
+                return BadRequest("Something went wrong, item not deleted");
+            }
         }
     }
 }
