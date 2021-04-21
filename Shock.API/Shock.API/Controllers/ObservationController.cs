@@ -24,7 +24,7 @@ namespace Shock.API.Controllers
         [HttpGet("GetAllObservationsForUser")]
         public IEnumerable<Observation> Get(string user)
         {
-            return user.ToLower()=="admin'"?dbContext.Observations: dbContext.Observations.Where(a=>a.CreatedUser.ToLower()==user.ToLower());
+            return user.ToLower()=="admin"?dbContext.Observations: dbContext.Observations.Where(a=>a.CreatedUser.ToLower()==user.ToLower());
         }
 
         [HttpGet("GetAllObservations")]
@@ -121,21 +121,28 @@ namespace Shock.API.Controllers
         {
         }
 
-        [HttpDelete("Delete/{id}")]
+        [HttpDelete("DeleteObservation")]
         public IActionResult Delete(string id)
         {
             try
             {
-                Guid.TryParse(id, out Guid result);
-
-                var res = dbContext.Observations.Where(a => a.Id == result).FirstOrDefault();
-
-                if (res != null)
+                if (!string.IsNullOrEmpty(id))
                 {
-                    dbContext.Observations.Remove(res);
-                    dbContext.SaveChanges();
+                    Guid.TryParse(id, out Guid result);
+
+                    var res = dbContext.Observations.Where(a => a.Id == result).FirstOrDefault();
+
+                    if (res != null)
+                    {
+                        dbContext.Observations.Remove(res);
+                        dbContext.SaveChanges();
+                    }
+                    return new OkResult();
                 }
-                return new OkResult();
+                else
+                {
+                    return BadRequest("Something went wrong, item not deleted");
+                }
             }
             catch
             {
